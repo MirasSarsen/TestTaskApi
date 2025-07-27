@@ -1,71 +1,79 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
+import logo from "./assets/logo.svg";
 import "./App.css";
 
 function App() {
-    const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
-    const messagesEndRef = useRef(null);
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+    const [response, setResponse] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const sendMessage = async () => {
         if (!input.trim()) return;
 
-        const userMessage = { text: input, sender: "user" };
-        setMessages(prev => [...prev, userMessage]);
-        setInput("");
-
+        setLoading(true);
+        setResponse("");
         try {
             const res = await axios.post(
                 `${import.meta.env.VITE_API_URL}/api/chat`,
-                { message: input }
+                {
+                    message: input,
+                }
             );
-            const botMessage = { text: res.data.message, sender: "bot" };
-            setMessages(prev => [...prev, botMessage]);
-        } catch (error) {
-            const errorMessage = {
-                text: "Произошла ошибка при отправке запроса",
-                sender: "bot",
-            };
-            setMessages(prev => [...prev, errorMessage]);
-        }
-    };
+            setResponse(res.data.choices[0].message.content);
+        } catch (err) {
+            console.error("❌ Axios error:");
 
-    const handleKeyPress = e => {
-        if (e.key === "Enter") sendMessage();
+            if (err.response) {
+                console.error("Status:", err.response.status);
+                console.error("Data:", err.response.data);
+                setResponse(
+                    `❌ Server error: ${err.response.status} – ${JSON.stringify(
+                        err.response.data
+                    )}`
+                );
+            } else if (err.request) {
+                console.error("No response received:", err.request);
+                setResponse("❌ No response received from server.");
+            } else {
+                console.error("Error:", err.message);
+                setResponse(`❌ Request setup error: ${err.message}`);
+            }
+
+            setLoading(false);
+        } finally {
+            setLoading(false);
+            setInput("");
+        }
     };
 
     return (
         <div className="App">
+            <img src={logo} alt="Logo" />
+            <h3>Hi there!</h3>
+            <h2>What would you like to know?</h2>
+            <p>
+                Use one of the most common prompts below or ask your own
+                question
+            </p>
+
             <div className="chat-box">
-                {messages.map((msg, i) => (
-                    <div
-                        key={i}
-                        className={`message ${
-                            msg.sender === "user" ? "user" : "bot"
-                        }`}>
-                        {msg.text}
-                    </div>
-                ))}
-                <div ref={messagesEndRef} />
-            </div>
-            <div className="input-box">
                 <input
                     type="text"
+                    placeholder="Ask whatever you want..."
                     value={input}
                     onChange={e => setInput(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                    placeholder="Введите сообщение..."
+                    onKeyDown={e => {
+                        if (e.key === "Enter") sendMessage();
+                    }}
                 />
-                <button onClick={sendMessage}>Отправить</button>
+                <button onClick={sendMessage} disabled={!input.trim()}>
+                    ➤
+                </button>
             </div>
+
+            {loading && <p className="response">⏳ Thinking...</p>}
+            {!loading && response && <p className="response">{response}</p>}
         </div>
     );
 }
