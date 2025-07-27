@@ -14,9 +14,9 @@ function App() {
         setLoading(true);
         setResponse("");
         try {
-            const res = await axios.post("http://localhost:5000/api/chat", {
-                message: input,
-            });
+           const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/chat`, {
+           message: input,
+        });
             setResponse(res.data.choices[0].message.content);
         } catch (err) {
             console.error("❌ Axios error:");
