@@ -39,8 +39,6 @@ function App() {
                 console.error("Error:", err.message);
                 setResponse(`❌ Request setup error: ${err.message}`);
             }
-
-            setLoading(false);
         } finally {
             setLoading(false);
             setInput("");
@@ -63,9 +61,7 @@ function App() {
                     placeholder="Ask whatever you want..."
                     value={input}
                     onChange={e => setInput(e.target.value)}
-                    onKeyDown={e => {
-                        if (e.key === "Enter") sendMessage();
-                    }}
+                    onKeyDown={e => e.key === "Enter" && sendMessage()}
                 />
                 <button onClick={sendMessage} disabled={!input.trim()}>
                     ➤

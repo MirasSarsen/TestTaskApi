@@ -2,7 +2,7 @@ import axios from "axios";
 
 const headers = {
     Authorization:
-        "Bearer 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",
+        "Bearer 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",
     "Content-Type": "application/json",
 };
 

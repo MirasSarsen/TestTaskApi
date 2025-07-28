@@ -1,14 +1,34 @@
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
-require("dotenv").config();
+
+// === Авто-поиск .env ===
+let envPath = path.resolve(__dirname, ".env");
+if (!fs.existsSync(envPath)) {
+    envPath = path.resolve(__dirname, "../.env");
+}
+if (!fs.existsSync(envPath)) {
+    console.error("❌ ERROR: .env file not found in server/ or project root!");
+    process.exit(1);
+}
+
+require("dotenv").config({ path: envPath });
+console.log("✅ .env loaded from:", envPath);
+console.log(
+    "🔑 OPENROUTER_API_KEY:",
+    process.env.OPENROUTER_API_KEY ? "LOADED" : "NOT FOUND"
+);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// === Основной эндпоинт для общения с OpenRouter ===
 app.post("/api/chat", async (req, res) => {
     const { message } = req.body;
+    console.log("📩 Message from client:", message);
 
     try {
         const response = await axios.post(
@@ -16,13 +36,14 @@ app.post("/api/chat", async (req, res) => {
             {
                 model: "openai/gpt-3.5-turbo",
                 messages: [{ role: "user", content: message }],
+                max_tokens: 500,
             },
             {
                 headers: {
                     Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
                     "Content-Type": "application/json",
-                    "HTTP-Referer": "http://localhost:3000", // можно любой локальный адрес
-                    "X-Title": "My Chat App", // название кастомное
+                    "HTTP-Referer": "http://localhost:3000",
+                    "X-Title": "My Chat App",
                 },
             }
         );
